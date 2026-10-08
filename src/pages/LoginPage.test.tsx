@@ -9,3 +9,19 @@ test('a correct login shows the welcome message', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
   expect(await screen.findByText('Welcome, Demo Student!')).toBeInTheDocument()
 })
+
+test('a wrong password shows an error message', async () => {
+  render(<LoginPage />)
+  await userEvent.type(screen.getByLabelText('Email'), 'demo@edupay.test')
+  await userEvent.type(screen.getByLabelText('Password'), 'wrong-password')
+  await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
+  expect(await screen.findByText('Wrong email or password.')).toBeInTheDocument()
+})
+
+test('a wrong password shows an error message', async () => {
+  render(<LoginPage />)
+  await userEvent.type(screen.getByLabelText('Email'), 'demo@edupay.test')
+  await userEvent.type(screen.getByLabelText('Password'), 'wrong-password')
+  await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
+  expect(await screen.findByText('Wrong email or password.')).toBeInTheDocument()
+})
