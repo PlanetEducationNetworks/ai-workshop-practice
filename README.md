@@ -22,13 +22,24 @@ On the signup page (`npm run dev`, then open `/#signup`), show how strong the pa
 
 Read `CLAUDE.md` before you start. The checks will notice if you break a rule.
 
+## TICKET-14 · Session 2: the fees page shows wrong prices
+
+Open `npm run dev`, then `/#fees`. The library card shows **£1.25**, but the real fee is **£12.50**. The exam fee and the total are wrong too.
+
+- Every price must be right, and the total must be **£499.55**
+- Finance will keep typing prices in different ways, so don't just edit the data
+- Add a test that would have caught this
+- Start with the 3 sentences. If the AI's first answer is wrong, **stop, rewind, and say what was wrong**. Don't pile fixes on top.
+
+Already forked in Session 1? On your fork on GitHub, click **Sync fork** first, then `git pull`.
+
 ## How to do it
 
 1. **Fork** this repo to your GitHub account, then clone your fork.
 2. `npm install` (do this before the session)
 3. `npm run dev` to see the page · `npm test` to run tests
 4. Fix TICKET-12 **with AI** (Claude Code or ChatGPT). Use the "before Enter" checklist.
-5. Push to a branch and open a **pull request to this repo** titled `TICKET-12 · your name`.
+5. Push to a branch and open a **pull request to this repo** titled `TICKET-12 · your name` (Session 2: `TICKET-14 · your name`).
 
 Every pull request is checked automatically and appears on the live board:
 
@@ -36,6 +47,7 @@ Every pull request is checked automatically and appears on the live board:
 |---|---|
 | Existing tests | You didn't break anything |
 | TICKET-12 fixed | The error really shows, on the password field |
+| TICKET-14 fixed | Every price and the total are right, for every way a price is written |
 | No new packages | AI didn't sneak in a dependency |
 | No unsafe HTML | No `dangerouslySetInnerHTML` |
 | Test added | You wrote or changed a test |
