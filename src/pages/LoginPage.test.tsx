@@ -9,3 +9,32 @@ test('a correct login shows the welcome message', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
   expect(await screen.findByText('Welcome, Demo Student!')).toBeInTheDocument()
 })
+
+test('a wrong password shows an error under the password field', async () => {
+  render(<LoginPage />)
+  await userEvent.type(screen.getByLabelText('Email'), 'demo@edupay.test')
+  await userEvent.type(screen.getByLabelText('Password'), 'wrong-horse')
+  await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
+
+  const alert = await screen.findByRole('alert')
+  expect(alert).toHaveTextContent('Wrong email or password.')
+  expect(alert).toHaveClass('error')
+  const password = screen.getByLabelText('Password')
+  expect(password).toHaveAttribute('aria-invalid', 'true')
+  expect(password).toHaveAccessibleDescription('Wrong email or password.')
+})
+
+test('the error clears when the next login succeeds', async () => {
+  render(<LoginPage />)
+  await userEvent.type(screen.getByLabelText('Email'), 'demo@edupay.test')
+  await userEvent.type(screen.getByLabelText('Password'), 'wrong-horse')
+  await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
+  await screen.findByRole('alert')
+
+  await userEvent.clear(screen.getByLabelText('Password'))
+  await userEvent.type(screen.getByLabelText('Password'), 'correct-horse')
+  await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
+
+  expect(await screen.findByText('Welcome, Demo Student!')).toBeInTheDocument()
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+})
