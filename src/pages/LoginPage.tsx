@@ -13,7 +13,6 @@ export function LoginPage() {
     setError(undefined)
     const res = await signIn(email, password)
     if (res.ok) {
-      setError(undefined)
       setUser(res.name)
     } else {
       setError(res.message)
