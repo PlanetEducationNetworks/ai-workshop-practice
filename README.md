@@ -41,3 +41,27 @@ Every pull request is checked automatically and appears on the live board:
 | Test added | You wrote or changed a test |
 
 Login that works: `demo@edupay.test` / `correct-horse`
+
+## Solution notes
+
+### TICKET-12 · Wrong password shows no error
+
+- **Bug:** `onSubmit` in `src/pages/LoginPage.tsx` only handled a successful login. When `signIn` returned `{ ok: false, message }`, the message was dropped, so nothing showed.
+- **Fix:** store the message in an `error` state and pass it to the password field's `error` prop. Our `Input` already shows it in red (`role="alert"`) and sets `aria-invalid`. No new packages.
+- **Test:** `src/pages/LoginPage.test.tsx` signs in with a wrong password and checks that the alert says "Wrong email or password." and the Password field is `aria-invalid`. It failed before the fix and passes after.
+
+### TICKET-13 · Password strength
+
+- **Change:** `src/pages/SignupPage.tsx` shows **Strong** under the password field when the password has 12+ characters with a letter, a number and a symbol, and **Weak** otherwise. Nothing shows while the field is empty. It's a small function, not a strength library, because CLAUDE.md says no new packages.
+- **Test:** `src/pages/SignupPage.test.tsx` covers an empty field (nothing shown), a short password (Weak), a long letters-only password (Weak) and a long mixed password (Strong).
+
+### Review: two dangerous lines in an AI-written TICKET-12 change
+
+1. `import { validate } from 'react-form-guardz'`: a new, unknown package. AI tools often make up package names, and attackers publish malware under those names (slopsquatting). It breaks the "no new packages" rule, and it isn't needed.
+2. `<p dangerouslySetInnerHTML={{ __html: error }} />`: renders the error as raw HTML, which is an XSS risk if the message ever contains user input. It breaks the "no unsafe HTML" rule. Use `<Input ... error={error} />` instead. React escapes the text.
+
+### How to check
+
+```bash
+npm test        # all tests pass
+```
