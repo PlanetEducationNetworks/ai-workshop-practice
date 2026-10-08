@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Button, Input } from '../components/ui'
+import { passwordStrength } from '../lib/passwordStrength'
 
 export function SignupPage() {
   const [name, setName] = useState('')
@@ -20,7 +21,11 @@ export function SignupPage() {
       <Input label="Name" value={name} onChange={setName} />
       <Input label="Email" type="email" value={email} onChange={setEmail} />
       <Input label="Password" type="password" value={password} onChange={setPassword} />
-      {/* TICKET-13: show how strong the password is, right under the field. */}
+      {password && (
+        <p className="strength" aria-live="polite">
+          Password strength: {passwordStrength(password)}
+        </p>
+      )}
       <Button type="submit">Sign up</Button>
     </form>
   )
