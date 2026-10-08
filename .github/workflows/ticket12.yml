@@ -10,8 +10,10 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
+      # Check the person's own code (PR head), not it merged with main: a fix merged by someone else must not count for everyone.
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
@@ -46,6 +48,22 @@ jobs:
           mkdir -p src/__acceptance14__
           cp .github/acceptance/ticket14.test.tsx src/__acceptance14__/
           npx vitest run src/__acceptance14__
+
+      - name: TICKET-14 part 2 (sibling discount)
+        id: ticket14b
+        continue-on-error: true
+        run: |
+          mkdir -p src/__acceptance14b__
+          cp .github/acceptance/ticket14b.test.tsx src/__acceptance14b__/
+          npx vitest run src/__acceptance14b__
+
+      - name: TICKET-14 part 3 (pay in 3)
+        id: ticket14c
+        continue-on-error: true
+        run: |
+          mkdir -p src/__acceptance14c__
+          cp .github/acceptance/ticket14c.test.tsx src/__acceptance14c__/
+          npx vitest run src/__acceptance14c__
 
       - name: No new packages added
         id: packages
@@ -84,7 +102,7 @@ jobs:
             const body = { kind: 'ci1', login: process.env.LOGIN, pr: +process.env.PR, url: process.env.URL, title: process.env.TITLE,
               existing: ok('${{ steps.existing.outcome }}'), ticket: ok('${{ steps.ticket.outcome }}'),
               packages: ok('${{ steps.packages.outcome }}'), safehtml: ok('${{ steps.safehtml.outcome }}'),
-              tests: ok('${{ steps.tests.outcome }}'), ticket13: ok('${{ steps.ticket13.outcome }}'), ticket14: ok('${{ steps.ticket14.outcome }}'), at: new Date().toISOString() };
+              tests: ok('${{ steps.tests.outcome }}'), ticket13: ok('${{ steps.ticket13.outcome }}'), ticket14: ok('${{ steps.ticket14.outcome }}'), ticket14b: ok('${{ steps.ticket14b.outcome }}'), ticket14c: ok('${{ steps.ticket14c.outcome }}'), at: new Date().toISOString() };
             fetch('https://bd-ai-survey.vercel.app/api/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
               .then(r => console.log('board:', r.status)).catch(e => console.log('board unreachable', e.message));"
 
@@ -98,6 +116,8 @@ jobs:
           echo "Test added:      ${{ steps.tests.outcome }}"
           echo "TICKET-13 bonus: ${{ steps.ticket13.outcome }}"
           echo "TICKET-14 fixed: ${{ steps.ticket14.outcome }}"
+          echo "TICKET-14 part 2: ${{ steps.ticket14b.outcome }}"
+          echo "TICKET-14 part 3: ${{ steps.ticket14c.outcome }}"
           # Session 1 PRs fix TICKET-12, Session 2 PRs fix TICKET-14: either one counts.
           T="${{ steps.ticket.outcome }}"; [ "${{ steps.ticket14.outcome }}" = "success" ] && T=success
           [ "${{ steps.existing.outcome }}${T}${{ steps.packages.outcome }}${{ steps.safehtml.outcome }}${{ steps.tests.outcome }}" = "successsuccesssuccesssuccesssuccess" ]
