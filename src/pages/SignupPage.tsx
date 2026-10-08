@@ -1,6 +1,14 @@
 import { useState, type FormEvent } from 'react'
 import { Button, Input } from '../components/ui'
 
+/** Weak: short or only one kind of character. Strong: 12+ chars with letters, numbers and symbols. */
+export function passwordStrength(password: string): 'Weak' | 'Medium' | 'Strong' {
+  const kinds = [/[a-z]/i, /[0-9]/, /[^a-z0-9]/i].filter(re => re.test(password)).length
+  if (password.length < 8 || kinds < 2) return 'Weak'
+  if (password.length >= 12 && kinds === 3) return 'Strong'
+  return 'Medium'
+}
+
 export function SignupPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -19,8 +27,13 @@ export function SignupPage() {
       <h1>Create your EduPay account</h1>
       <Input label="Name" value={name} onChange={setName} />
       <Input label="Email" type="email" value={email} onChange={setEmail} />
-      <Input label="Password" type="password" value={password} onChange={setPassword} />
-      {/* TICKET-13: show how strong the password is, right under the field. */}
+      <Input
+        label="Password"
+        type="password"
+        value={password}
+        onChange={setPassword}
+        hint={password ? `Password strength: ${passwordStrength(password)}` : undefined}
+      />
       <Button type="submit">Sign up</Button>
     </form>
   )
