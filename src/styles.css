@@ -16,5 +16,6 @@ body { margin: 0; }
 .field input { padding: 12px 14px; border-radius: 10px; border: 2px solid #ddd; font-size: 16px; }
 .field input[aria-invalid='true'] { border-color: var(--danger); }
 .field .error { color: var(--danger); font-size: 14px; margin: 0; }
+.field .hint { color: var(--muted); font-size: 14px; margin: 0; }
 .btn { padding: 12px 16px; border-radius: 10px; border: 0; background: var(--ink); color: var(--paper); font-weight: 700; font-size: 16px; cursor: pointer; }
 .welcome { color: var(--primary); font-weight: 700; }
