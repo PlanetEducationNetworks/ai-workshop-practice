@@ -6,13 +6,13 @@ export function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [user, setUser] = useState<string | null>(null)
-  const [error, setError] = useState('')
+  const [error, setError] = useState<string | undefined>()
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
-    setError('')
     const res = await signIn(email, password)
     if (res.ok) {
+      setError(undefined)
       setUser(res.name)
     } else {
       setError(res.message)
@@ -25,7 +25,13 @@ export function LoginPage() {
     <form className="login" onSubmit={onSubmit}>
       <h1>Log in to EduPay</h1>
       <Input label="Email" type="email" value={email} onChange={setEmail} />
-      <Input label="Password" type="password" value={password} onChange={setPassword} error={error} />
+      <Input
+        label="Password"
+        type="password"
+        value={password}
+        onChange={setPassword}
+        error={error}
+      />
       <Button type="submit">Log in</Button>
     </form>
   )
