@@ -1,6 +1,6 @@
 /** Turns a price from the fees data ("450.00") into pence (45000). */
 export function toPence(price: string): number {
-  return parseInt(price.replace('.', ''), 10)
+  return Math.round(parseFloat(price) * 100)
 }
 
 /** 1250 → "£12.50" */
