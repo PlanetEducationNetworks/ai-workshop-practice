@@ -6,13 +6,13 @@ export function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [user, setUser] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | undefined>()
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
-    setError(null)
     const res = await signIn(email, password)
     if (res.ok) {
+      setError(undefined)
       setUser(res.name)
     } else {
       setError(res.message)
@@ -30,7 +30,7 @@ export function LoginPage() {
         type="password"
         value={password}
         onChange={setPassword}
-        error={error ?? undefined}
+        error={error}
       />
       <Button type="submit">Log in</Button>
     </form>
