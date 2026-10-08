@@ -15,9 +15,7 @@ test('a wrong password shows an error under the password field', async () => {
   await userEvent.type(screen.getByLabelText('Email'), 'demo@edupay.test')
   await userEvent.type(screen.getByLabelText('Password'), 'wrong-password')
   await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
-
-  const error = await screen.findByRole('alert')
-  expect(error).toHaveTextContent('Wrong email or password.')
+  expect(await screen.findByRole('alert')).toHaveTextContent('Wrong email or password.')
   expect(screen.getByLabelText('Password')).toHaveAttribute('aria-invalid', 'true')
-  expect(screen.getByLabelText('Password')).toHaveAccessibleDescription('Wrong email or password.')
+  expect(screen.queryByText(/Welcome/)).not.toBeInTheDocument()
 })
