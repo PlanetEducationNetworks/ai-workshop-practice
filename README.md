@@ -41,6 +41,25 @@ Already forked in Session 1? On your fork on GitHub, click **Sync fork** first, 
 
 For every part: start with the 3 sentences, add a test, no new packages. If the AI's answer is wrong, **stop, rewind, and say what was wrong**. Don't pile fixes on top.
 
+## TICKET-15 · Take-home team task (Tigers vs Eagles), due Wed 21 Oct 18:00
+
+A real ticket from our PEN Ticketing (Admin › Finance), copied as it was written:
+
+> **Fix non-functional pagination and missing 'rows per page' on Agent Overview**
+> The Previous and Next buttons don't work, and the rows per page dropdown is missing. Users should be able to move between pages of agent data and choose how many agents they see on one page.
+
+Open `npm run dev`, then `/#agents`. The page is `src/pages/AgentOverviewPage.tsx`, the 57 agencies are in `src/data/agents.ts` (made up).
+
+**Work as a team, on your team branch in this repo** (not a fork): `ticket-15-tigers` or `ticket-15-eagles`. `git pull` before you start, push small commits often.
+
+1. **Designers first:** design the Agent Overview table in Figma (default, page 2, rows-per-page menu open, empty, loading, phone 375px). Post the link in your team's Teams thread.
+2. **The ticket leaves things out on purpose.** Ask the PM (Radu) in your team thread. Only your team sees the answers.
+3. **Developers build it with Claude Code**, from the design. Start with: *"Ask me 3 questions before you write code."* One session per task, `/clear` between tasks. Wrong answer? Rewind, say what was wrong. No new packages. `npm test` must pass.
+4. **A designer reviews the pull request** against the Figma frame and leaves a comment.
+5. Open **one pull request to `main`** titled `TICKET-15 · Tigers` (or Eagles), with the Figma link in the description.
+
+**Points (shown in session 3):** works as the PM asked (checked by hidden tests) +2 +2 · Figma link in the PR +2 · designer review on the PR +1 · smaller change than the other team +1.
+
 ## How to do it
 
 1. **Fork** this repo to your GitHub account, then clone your fork.
