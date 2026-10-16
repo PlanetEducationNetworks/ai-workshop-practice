@@ -3,13 +3,15 @@ import { createRoot } from 'react-dom/client'
 import { LoginPage } from './pages/LoginPage'
 import { SignupPage } from './pages/SignupPage'
 import { FeesPage } from './pages/FeesPage'
+import { AgentOverviewPage } from './pages/AgentOverviewPage'
 import { SIBLING_STUDENT } from './data/student'
 import './styles.css'
 
-// Open /#signup for the signup page (TICKET-13), /#fees or /#fees-sibling for the fees page (TICKET-14).
+// Open /#agents for Agent Overview (TICKET-15). Open /#signup for the signup page (TICKET-13), /#fees or /#fees-sibling for the fees page (TICKET-14).
 const Page =
   location.hash === '#signup' ? SignupPage
   : location.hash === '#fees' ? FeesPage
+  : location.hash === '#agents' ? AgentOverviewPage
   : location.hash === '#fees-sibling' ? () => <FeesPage student={SIBLING_STUDENT} />
   : LoginPage
 
