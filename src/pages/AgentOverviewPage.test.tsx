@@ -98,6 +98,7 @@ test('a refresh keeps your place', async () => {
 
 test.each([
   '?page=abc', '?page=0', '?page=-2', '?page=2.5', '?page=', '?size=7', '?size=abc', '?size=', '?page=abc&size=999', '?junk',
+  '?page=1e1', '?page=0x2', '?page=Infinity', '?size=0x19', '?size=25.0', '?size=%2025',
 ])('a bad URL (%s) falls back to page 1 with 10 rows', search => {
   open(search)
   expect(screen.getByText('Showing 1–10 of 57 agents')).toBeInTheDocument()
@@ -178,14 +179,47 @@ test('search and sort work together', async () => {
   expect(screen.getByText('Showing 1–3 of 3 agents')).toBeInTheDocument()
 })
 
-test('search and sort are kept in the URL, and typing does not add history entries', async () => {
+test('search and sort are kept in the URL', async () => {
   open()
-  const before = history.length
   await search('dhaka')
   expect(location.search).toBe('?page=1&size=10&q=dhaka')
-  expect(history.length).toBe(before)
   await userEvent.click(sortButton())
   expect(location.search).toBe('?page=1&size=10&q=dhaka&sort=asc')
+})
+
+test('starting a search adds one history entry, more typing replaces it, and Back returns to where you were', async () => {
+  open('?page=3')
+  const before = history.length
+  await search('dhaka')
+  expect(history.length).toBe(before + 1)
+  history.back()
+  expect(await screen.findByText('Showing 21–30 of 57 agents')).toBeInTheDocument()
+  expect(screen.getByLabelText('Search')).toHaveValue('')
+})
+
+test('a refresh keeps the search and the sort', async () => {
+  const { unmount } = open()
+  await search('dhaka')
+  await userEvent.click(sortButton())
+  unmount()
+  render(<AgentOverviewPage />)
+  expect(screen.getByLabelText('Search')).toHaveValue('dhaka')
+  expect(studentsHeader()).toHaveAttribute('aria-sort', 'ascending')
+})
+
+test('other URL params are kept when the page changes', async () => {
+  open('?utm_source=teams')
+  await next()
+  expect(new URLSearchParams(location.search).get('utm_source')).toBe('teams')
+  expect(new URLSearchParams(location.search).get('page')).toBe('2')
+})
+
+test('sorting does not reorder the shared agent list', async () => {
+  const ids = AGENTS.map(a => a.id)
+  render(<AgentOverviewPage />)
+  await userEvent.click(sortButton())
+  await userEvent.click(sortButton())
+  expect(AGENTS.map(a => a.id)).toEqual(ids)
 })
 
 test('reads search and sort from the URL, and ignores a bad sort value', () => {
@@ -232,11 +266,35 @@ test('it works with the keyboard only', async () => {
   expect(studentsHeader()).toHaveAttribute('aria-sort', 'ascending')
 })
 
-test('keyboard focus is not lost when Next becomes disabled on the last page', async () => {
+test('focus moves to Previous when Next becomes disabled on the last page', async () => {
   open('?page=5')
-  const nextButton = screen.getByRole('button', { name: 'Next' })
-  nextButton.focus()
+  screen.getByRole('button', { name: 'Next' }).focus()
   await userEvent.keyboard('{Enter}')
   expect(screen.getByText('Showing 51–57 of 57 agents')).toBeInTheDocument()
-  expect(document.body).not.toHaveFocus()
+  expect(screen.getByRole('button', { name: 'Previous' })).toHaveFocus()
+})
+
+test('focus moves to Next when Previous becomes disabled on page 1', async () => {
+  open('?page=2')
+  screen.getByRole('button', { name: 'Previous' }).focus()
+  await userEvent.keyboard('{Enter}')
+  expect(screen.getByText('Showing 1–10 of 57 agents')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Next' })).toHaveFocus()
+})
+
+test('focus stays in the pager when a two-page list reaches its last page', async () => {
+  open('?size=50')
+  screen.getByRole('button', { name: 'Next' }).focus()
+  await userEvent.keyboard('{Enter}')
+  expect(screen.getByText('Showing 51–57 of 57 agents')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Previous' })).toHaveFocus()
+})
+
+test('the empty message and the Showing text share one live region', async () => {
+  render(<AgentOverviewPage />)
+  const live = screen.getByText('Showing 1–10 of 57 agents')
+  await search('zzz')
+  expect(screen.getByText('No agents found for "zzz".')).toBe(live)
+  await userEvent.clear(screen.getByLabelText('Search'))
+  expect(screen.getByText('Showing 1–10 of 57 agents')).toBe(live)
 })
