@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AGENTS } from '../data/agents'
-import { Button, Select } from '../components/ui'
+import { Button, Input, Select } from '../components/ui'
 
 // Admin > Finance > Agent Overview. Open /#agents.
 // ponytail: sizes and default from the Figma handoff note, Radu to confirm
@@ -16,10 +16,12 @@ function readParams(search: string) {
 }
 
 export function AgentOverviewPage() {
-  const [{ page, size }, setParams] = useState(() => readParams(location.search))
-  const go = (next: { page: number; size: number }) => {
+  const [{ page: rawPage, size }, setParams] = useState(() => readParams(location.search))
+  const [query, setQuery] = useState('')
+  const [sort, setSort] = useState<'asc' | 'desc' | null>(null)
+  const go = (next: { page: number; size: number }, replace = false) => {
     setParams(next)
-    history.pushState(null, '', `?page=${next.page}&size=${next.size}${location.hash}`)
+    history[replace ? 'replaceState' : 'pushState'](null, '', `?page=${next.page}&size=${next.size}${location.hash}`)
   }
   // Back/Forward change the URL without going through `go`, so re-read it.
   useEffect(() => {
@@ -27,23 +29,75 @@ export function AgentOverviewPage() {
     addEventListener('popstate', onPop)
     return () => removeEventListener('popstate', onPop)
   }, [])
-  const total = AGENTS.length
-  const pages = Math.ceil(total / size)
+  // ponytail: case-insensitive "contains" on agency name, Radu to confirm the rules
+  const q = query.trim().toLowerCase()
+  let list = q ? AGENTS.filter(a => a.name.toLowerCase().includes(q)) : AGENTS
+  if (sort) list = [...list].sort((a, b) => (sort === 'asc' ? a.students - b.students : b.students - a.students))
+  const total = list.length
+  const pages = Math.max(1, Math.ceil(total / size))
+  const page = Math.min(rawPage, pages)
   const start = (page - 1) * size
   const end = Math.min(start + size, total)
   return (
     <div className="login">
       <h1>Agent Overview</h1>
+      <div className="toolbar">
+        <Input
+          label="Search agencies"
+          value={query}
+          onChange={v => {
+            setQuery(v)
+            go({ page: 1, size }, true)
+          }}
+        />
+        {query && (
+          <Button
+            type="button"
+            onClick={() => {
+              setQuery('')
+              go({ page: 1, size }, true)
+            }}
+          >
+            Clear search
+          </Button>
+        )}
+        <span>{total} agents</span>
+      </div>
       <table className="fees">
         <thead>
-          <tr><th>Agency</th><th>Students</th></tr>
+          <tr>
+            <th>Agency</th>
+            <th aria-sort={sort === 'asc' ? 'ascending' : sort === 'desc' ? 'descending' : undefined}>
+              <Button
+                type="button"
+                className="sort-btn"
+                onClick={() => {
+                  setSort(sort === null ? 'asc' : sort === 'asc' ? 'desc' : null)
+                  go({ page: 1, size }, true)
+                }}
+              >
+                Students{sort === 'asc' ? ' ▲' : sort === 'desc' ? ' ▼' : ''}
+              </Button>
+            </th>
+          </tr>
         </thead>
         <tbody>
-          {AGENTS.slice(start, end).map(a => (
-            <tr key={a.id}><td>{a.name}</td><td>{a.students}</td></tr>
-          ))}
+          {total === 0 ? (
+            <tr>
+              <td colSpan={2}>
+                <strong>No agents match “{query.trim()}”</strong>
+                <br />
+                Check the spelling and try again.
+              </td>
+            </tr>
+          ) : (
+            list.slice(start, end).map(a => (
+              <tr key={a.id}><td>{a.name}</td><td>{a.students}</td></tr>
+            ))
+          )}
         </tbody>
       </table>
+      {total > 0 && (
       <nav className="pager" aria-label="Agent pagination">
         <Select
           label="Rows per page"
@@ -66,6 +120,7 @@ export function AgentOverviewPage() {
           Next
         </Button>
       </nav>
+      )}
     </div>
   )
 }
