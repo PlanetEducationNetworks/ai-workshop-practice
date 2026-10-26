@@ -2,6 +2,8 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { AgentOverviewPage } from './AgentOverviewPage'
 
+beforeEach(() => history.replaceState(null, '', '/'))
+
 const rows = () => screen.getAllByRole('row').length - 1 // minus header
 
 test('page 1 shows 10 of 57 agencies, Previous is disabled', () => {
@@ -36,3 +38,33 @@ test('changing rows per page goes back to page 1', async () => {
   expect(rows()).toBe(25)
   expect(screen.getByText('1–25 of 57')).toBeInTheDocument()
 })
+
+const at = (search: string) => history.replaceState(null, '', `/${search}#agents`)
+
+test('page and size are read from the URL', () => {
+  at('?page=3&size=10')
+  render(<AgentOverviewPage />)
+  expect(screen.getByText('21–30 of 57')).toBeInTheDocument()
+})
+
+test('size is read from the URL', () => {
+  at('?size=25')
+  render(<AgentOverviewPage />)
+  expect(rows()).toBe(25)
+})
+
+test('a page past the end shows the last page', () => {
+  at('?page=999&size=10')
+  render(<AgentOverviewPage />)
+  expect(screen.getByText('51–57 of 57')).toBeInTheDocument()
+})
+
+test.each(['?page=abc&size=7', '?page=-1', '?page=0', '?page=2.5', '?page='])(
+  'bad URL %s falls back to page 1 with 10 rows',
+  search => {
+    at(search)
+    render(<AgentOverviewPage />)
+    expect(screen.getByText('1–10 of 57')).toBeInTheDocument()
+    expect(rows()).toBe(10)
+  }
+)

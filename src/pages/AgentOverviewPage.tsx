@@ -6,9 +6,17 @@ import { Button, Select } from '../components/ui'
 // ponytail: sizes and default from the Figma handoff note, Radu to confirm
 const SIZES = [10, 25, 50, 100]
 
+// Anything that isn't a whole page number or an allowed size falls back to the defaults (Radu to confirm).
+function readParams(search: string) {
+  const q = new URLSearchParams(search)
+  const size = SIZES.includes(Number(q.get('size'))) ? Number(q.get('size')) : SIZES[0]
+  const raw = Number(q.get('page'))
+  const page = Number.isInteger(raw) && raw >= 1 ? raw : 1
+  return { page: Math.min(page, Math.ceil(AGENTS.length / size)), size }
+}
+
 export function AgentOverviewPage() {
-  const [page, setPage] = useState(1)
-  const [size, setSize] = useState(SIZES[0])
+  const [{ page, size }, setParams] = useState(() => readParams(location.search))
   const total = AGENTS.length
   const pages = Math.ceil(total / size)
   const start = (page - 1) * size
@@ -32,20 +40,19 @@ export function AgentOverviewPage() {
           value={size}
           options={SIZES}
           onChange={s => {
-            setSize(s)
-            setPage(1)
+            setParams({ page: 1, size: s })
           }}
         />
         <span aria-live="polite">{`${start + 1}–${end} of ${total}`}</span>
-        <Button type="button" aria-disabled={page === 1} onClick={() => page > 1 && setPage(page - 1)}>
+        <Button type="button" aria-disabled={page === 1} onClick={() => page > 1 && setParams({ page: page - 1, size })}>
           Previous
         </Button>
         {Array.from({ length: pages }, (_, i) => i + 1).map(n => (
-          <Button key={n} type="button" aria-current={n === page ? 'page' : undefined} onClick={() => setPage(n)}>
+          <Button key={n} type="button" aria-current={n === page ? 'page' : undefined} onClick={() => setParams({ page: n, size })}>
             {n}
           </Button>
         ))}
-        <Button type="button" aria-disabled={page === pages} onClick={() => page < pages && setPage(page + 1)}>
+        <Button type="button" aria-disabled={page === pages} onClick={() => page < pages && setParams({ page: page + 1, size })}>
           Next
         </Button>
       </nav>
