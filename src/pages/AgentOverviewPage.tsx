@@ -48,37 +48,28 @@ export function AgentOverviewPage() {
   const start = (page - 1) * size
   const end = Math.min(start + size, total)
   return (
-    <div className="login">
+    <main className="agents">
       <h1>Agent Overview</h1>
+      <p className="agents-sub">Applications, commission and outstanding balances for every agent.</p>
+      <div className="agents-card">
       <div className="toolbar">
         <Input
           inputRef={searchBox}
           label="Search agencies"
+          placeholder="Search by agency name"
           value={query}
           onChange={v => {
             setQuery(v)
             go({ page: 1, size }, true)
           }}
         />
-        {query && (
-          <Button
-            type="button"
-            onClick={() => {
-              setQuery('')
-              go({ page: 1, size }, true)
-              searchBox.current?.focus()
-            }}
-          >
-            Clear search
-          </Button>
-        )}
-        <span aria-live="polite">{total} agents</span>
+        <span className="count" aria-live="polite">{total} agents</span>
       </div>
-      <table className="fees">
+      <table className="agents-table">
         <thead>
           <tr>
             <th>Agency</th>
-            <th aria-sort={sort === 'asc' ? 'ascending' : sort === 'desc' ? 'descending' : undefined}>
+            <th className="num" aria-sort={sort === 'asc' ? 'ascending' : sort === 'desc' ? 'descending' : undefined}>
               <Button
                 type="button"
                 className="sort-btn"
@@ -95,49 +86,65 @@ export function AgentOverviewPage() {
         <tbody>
           {total === 0 ? (
             <tr>
-              <td colSpan={2}>
+              <td colSpan={2} className="empty">
+                <span className="empty-icon" />
                 <strong>No agents match “{query.trim()}”</strong>
-                <br />
-                Check the spelling and try again.
+                <p>Check the spelling and try again.</p>
+                <Button
+                  type="button"
+                  className="secondary"
+                  onClick={() => {
+                    setQuery('')
+                    go({ page: 1, size }, true)
+                    searchBox.current?.focus()
+                  }}
+                >
+                  Clear search
+                </Button>
               </td>
             </tr>
           ) : (
             list.slice(start, end).map(a => (
-              <tr key={a.id}><td>{a.name}</td><td>{a.students}</td></tr>
+              <tr key={a.id}><td>{a.name}</td><td className="num">{a.students}</td></tr>
             ))
           )}
         </tbody>
       </table>
       {total > 0 && (
       <nav ref={pager} className="pager" aria-label="Agent pagination">
-        <Select
-          label="Rows per page"
-          value={size}
-          options={SIZES}
-          onChange={s => {
-            go({ page: 1, size: s })
-          }}
-        />
-        <span aria-live="polite">{`Showing ${start + 1}–${end} of ${total} agents`}</span>
-        <Button type="button" disabled={page === 1} onClick={() => {
-            refocus.current = page - 1 === 1
-            go({ page: page - 1, size })
-          }}>
-          Previous
-        </Button>
-        {Array.from({ length: pages }, (_, i) => i + 1).map(n => (
-          <Button key={n} type="button" aria-current={n === page ? 'page' : undefined} onClick={() => go({ page: n, size })}>
-            {n}
+        <div className="pager-left">
+          <Select
+            label="Rows per page"
+            value={size}
+            options={SIZES}
+            onChange={s => {
+              go({ page: 1, size: s })
+            }}
+          />
+          <span aria-live="polite">{`Showing ${start + 1}–${end} of ${total} agents`}</span>
+        </div>
+        <div className="pager-pages">
+          <Button type="button" className="step prev" disabled={page === 1} onClick={() => {
+              refocus.current = page - 1 === 1
+              go({ page: page - 1, size })
+            }}>
+            Previous
           </Button>
-        ))}
-        <Button type="button" disabled={page === pages} onClick={() => {
-            refocus.current = page + 1 === pages
-            go({ page: page + 1, size })
-          }}>
-          Next
-        </Button>
+          {Array.from({ length: pages }, (_, i) => i + 1).map(n => (
+            <Button key={n} type="button" className="page" aria-current={n === page ? 'page' : undefined} onClick={() => go({ page: n, size })}>
+              {n}
+            </Button>
+          ))}
+          <Button type="button" className="step next" disabled={page === pages} onClick={() => {
+              refocus.current = page + 1 === pages
+              go({ page: page + 1, size })
+            }}>
+            Next
+          </Button>
+        </div>
       </nav>
       )}
-    </div>
+      </div>
+    </main>
   )
 }

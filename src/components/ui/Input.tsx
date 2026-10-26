@@ -8,9 +8,10 @@ type InputProps = {
   /** Shows a red message under the field and marks it invalid. */
   error?: string
   inputRef?: Ref<HTMLInputElement>
+  placeholder?: string
 }
 
-export function Input({ label, type = 'text', value, onChange, error, inputRef }: InputProps) {
+export function Input({ label, type = 'text', value, onChange, error, inputRef, placeholder }: InputProps) {
   const id = useId()
   const errorId = `${id}-error`
   return (
@@ -21,6 +22,7 @@ export function Input({ label, type = 'text', value, onChange, error, inputRef }
         id={id}
         type={type}
         value={value}
+        placeholder={placeholder}
         onChange={e => onChange(e.target.value)}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
