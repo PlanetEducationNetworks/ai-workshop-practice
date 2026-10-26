@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AGENTS } from '../data/agents'
 import { Button, Select } from '../components/ui'
 
@@ -17,6 +17,16 @@ function readParams(search: string) {
 
 export function AgentOverviewPage() {
   const [{ page, size }, setParams] = useState(() => readParams(location.search))
+  const go = (next: { page: number; size: number }) => {
+    setParams(next)
+    history.pushState(null, '', `?page=${next.page}&size=${next.size}${location.hash}`)
+  }
+  // Back/Forward change the URL without going through `go`, so re-read it.
+  useEffect(() => {
+    const onPop = () => setParams(readParams(location.search))
+    addEventListener('popstate', onPop)
+    return () => removeEventListener('popstate', onPop)
+  }, [])
   const total = AGENTS.length
   const pages = Math.ceil(total / size)
   const start = (page - 1) * size
@@ -40,19 +50,19 @@ export function AgentOverviewPage() {
           value={size}
           options={SIZES}
           onChange={s => {
-            setParams({ page: 1, size: s })
+            go({ page: 1, size: s })
           }}
         />
         <span aria-live="polite">{`${start + 1}–${end} of ${total}`}</span>
-        <Button type="button" aria-disabled={page === 1} onClick={() => page > 1 && setParams({ page: page - 1, size })}>
+        <Button type="button" aria-disabled={page === 1} onClick={() => page > 1 && go({ page: page - 1, size })}>
           Previous
         </Button>
         {Array.from({ length: pages }, (_, i) => i + 1).map(n => (
-          <Button key={n} type="button" aria-current={n === page ? 'page' : undefined} onClick={() => setParams({ page: n, size })}>
+          <Button key={n} type="button" aria-current={n === page ? 'page' : undefined} onClick={() => go({ page: n, size })}>
             {n}
           </Button>
         ))}
-        <Button type="button" aria-disabled={page === pages} onClick={() => page < pages && setParams({ page: page + 1, size })}>
+        <Button type="button" aria-disabled={page === pages} onClick={() => page < pages && go({ page: page + 1, size })}>
           Next
         </Button>
       </nav>

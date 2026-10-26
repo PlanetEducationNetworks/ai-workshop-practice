@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { AgentOverviewPage } from './AgentOverviewPage'
 
@@ -68,3 +68,41 @@ test.each(['?page=abc&size=7', '?page=-1', '?page=0', '?page=2.5', '?page='])(
     expect(rows()).toBe(10)
   }
 )
+
+test('Next writes page and size to the URL and keeps the hash', async () => {
+  at('')
+  render(<AgentOverviewPage />)
+  await userEvent.click(screen.getByRole('button', { name: 'Next' }))
+  expect(location.search).toBe('?page=2&size=10')
+  expect(location.hash).toBe('#agents')
+})
+
+test('changing rows per page writes size and page 1 to the URL', async () => {
+  render(<AgentOverviewPage />)
+  await userEvent.click(screen.getByRole('button', { name: /Rows per page/ }))
+  await userEvent.click(within(screen.getByRole('listbox')).getByRole('option', { name: '25' }))
+  expect(location.search).toBe('?page=1&size=25')
+})
+
+const back = () =>
+  act(async () => {
+    history.back()
+    await new Promise(r => setTimeout(r, 50))
+  })
+
+test('Back restores the previous page', async () => {
+  render(<AgentOverviewPage />)
+  await userEvent.click(screen.getByRole('button', { name: 'Next' }))
+  await back()
+  expect(screen.getByText('1–10 of 57')).toBeInTheDocument()
+})
+
+test('Back after changing rows per page restores size and page', async () => {
+  render(<AgentOverviewPage />)
+  await userEvent.click(screen.getByRole('button', { name: 'Next' }))
+  await userEvent.click(screen.getByRole('button', { name: /Rows per page/ }))
+  await userEvent.click(within(screen.getByRole('listbox')).getByRole('option', { name: '25' }))
+  await back()
+  expect(screen.getByText('11–20 of 57')).toBeInTheDocument()
+  expect(rows()).toBe(10)
+})
