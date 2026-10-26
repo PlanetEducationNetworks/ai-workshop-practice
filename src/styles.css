@@ -21,3 +21,6 @@ body { margin: 0; }
 .fees { width: 100%; border-collapse: collapse; }
 .fees td, .fees th { padding: 10px 4px; border-bottom: 1px solid #e5e7eb; text-align: left; }
 .fees td:last-child, .fees th:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.field select { padding: 12px 14px; border-radius: 10px; border: 2px solid #ddd; font-size: 16px; }
+.pager { display: flex; gap: 8px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
