@@ -28,7 +28,7 @@ export function Select({ label, value, options, onChange }: SelectProps) {
     button.current?.focus()
   }
   const choose = (o: number) => {
-    onChange(o)
+    if (o !== value) onChange(o)
     close()
   }
   const onListKey = (e: React.KeyboardEvent) => {
@@ -64,6 +64,7 @@ export function Select({ label, value, options, onChange }: SelectProps) {
         aria-expanded={open}
         aria-labelledby={`${id}-label ${id}-btn`}
         id={`${id}-btn`}
+        onMouseDown={e => open && e.preventDefault()} // else the list's onBlur closes it first and the click reopens it
         onClick={() => (open ? close() : openMenu())}
         onKeyDown={e => {
           if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
