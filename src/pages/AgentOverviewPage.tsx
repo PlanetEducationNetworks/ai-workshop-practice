@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AGENTS } from '../data/agents'
 import { Button, Input, Select } from '../components/ui'
 
@@ -17,6 +17,9 @@ function readParams(search: string) {
 
 export function AgentOverviewPage() {
   const [{ page: rawPage, size }, setParams] = useState(() => readParams(location.search))
+  const searchBox = useRef<HTMLInputElement>(null)
+  const pager = useRef<HTMLElement>(null)
+  const refocus = useRef(false)
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<'asc' | 'desc' | null>(null)
   const go = (next: { page: number; size: number }, replace = false) => {
@@ -29,6 +32,12 @@ export function AgentOverviewPage() {
     addEventListener('popstate', onPop)
     return () => removeEventListener('popstate', onPop)
   }, [])
+  // A pressed Previous/Next that just became disabled would drop focus, so move it to the current page.
+  useEffect(() => {
+    if (!refocus.current) return
+    refocus.current = false
+    pager.current?.querySelector<HTMLElement>('[aria-current="page"]')?.focus()
+  })
   // ponytail: case-insensitive "contains" on agency name, Radu to confirm the rules
   const q = query.trim().toLowerCase()
   let list = q ? AGENTS.filter(a => a.name.toLowerCase().includes(q)) : AGENTS
@@ -43,6 +52,7 @@ export function AgentOverviewPage() {
       <h1>Agent Overview</h1>
       <div className="toolbar">
         <Input
+          inputRef={searchBox}
           label="Search agencies"
           value={query}
           onChange={v => {
@@ -56,12 +66,13 @@ export function AgentOverviewPage() {
             onClick={() => {
               setQuery('')
               go({ page: 1, size }, true)
+              searchBox.current?.focus()
             }}
           >
             Clear search
           </Button>
         )}
-        <span>{total} agents</span>
+        <span aria-live="polite">{total} agents</span>
       </div>
       <table className="fees">
         <thead>
@@ -98,7 +109,7 @@ export function AgentOverviewPage() {
         </tbody>
       </table>
       {total > 0 && (
-      <nav className="pager" aria-label="Agent pagination">
+      <nav ref={pager} className="pager" aria-label="Agent pagination">
         <Select
           label="Rows per page"
           value={size}
@@ -108,7 +119,11 @@ export function AgentOverviewPage() {
           }}
         />
         <span aria-live="polite">{`${start + 1}–${end} of ${total}`}</span>
-        <Button type="button" aria-disabled={page === 1} onClick={() => page > 1 && go({ page: page - 1, size })}>
+        <Button type="button" aria-disabled={page === 1} onClick={() => {
+            if (page === 1) return
+            refocus.current = page - 1 === 1
+            go({ page: page - 1, size })
+          }}>
           Previous
         </Button>
         {Array.from({ length: pages }, (_, i) => i + 1).map(n => (
@@ -116,7 +131,11 @@ export function AgentOverviewPage() {
             {n}
           </Button>
         ))}
-        <Button type="button" aria-disabled={page === pages} onClick={() => page < pages && go({ page: page + 1, size })}>
+        <Button type="button" aria-disabled={page === pages} onClick={() => {
+            if (page === pages) return
+            refocus.current = page + 1 === pages
+            go({ page: page + 1, size })
+          }}>
           Next
         </Button>
       </nav>

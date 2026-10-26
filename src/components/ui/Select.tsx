@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 
 type SelectProps = {
   label: string
@@ -10,31 +10,90 @@ type SelectProps = {
 export function Select({ label, value, options, onChange }: SelectProps) {
   const id = useId()
   const [open, setOpen] = useState(false)
+  const [active, setActive] = useState(0)
+  const button = useRef<HTMLButtonElement>(null)
+  const list = useRef<HTMLUListElement>(null)
+
+  // The list takes focus while open; arrows move `active`, Enter picks it.
+  useEffect(() => {
+    if (open) list.current?.focus()
+  }, [open])
+
+  const openMenu = () => {
+    setActive(options.indexOf(value))
+    setOpen(true)
+  }
+  const close = () => {
+    setOpen(false)
+    button.current?.focus()
+  }
+  const choose = (o: number) => {
+    onChange(o)
+    close()
+  }
+  const onListKey = (e: React.KeyboardEvent) => {
+    const last = options.length - 1
+    const moves: Record<string, number> = {
+      ArrowDown: Math.min(active + 1, last),
+      ArrowUp: Math.max(active - 1, 0),
+      Home: 0,
+      End: last,
+    }
+    if (e.key in moves) {
+      e.preventDefault()
+      setActive(moves[e.key])
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      choose(options[active])
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      close()
+    } else if (e.key === 'Tab') {
+      setOpen(false)
+    }
+  }
+
   return (
     <div className="select">
       <span id={`${id}-label`}>{label}</span>
       <button
+        ref={button}
         type="button"
         className="select-btn"
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-labelledby={`${id}-label ${id}-btn`}
         id={`${id}-btn`}
-        onClick={() => setOpen(o => !o)}
+        onClick={() => (open ? close() : openMenu())}
+        onKeyDown={e => {
+          if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault()
+            openMenu()
+          }
+        }}
       >
         {value}
       </button>
       {open && (
-        <ul role="listbox" aria-labelledby={`${id}-label`} className="select-menu">
-          {options.map(o => (
+        <ul
+          ref={list}
+          role="listbox"
+          tabIndex={-1}
+          aria-labelledby={`${id}-label`}
+          aria-activedescendant={`${id}-opt-${active}`}
+          className="select-menu"
+          onKeyDown={onListKey}
+          onBlur={() => setOpen(false)}
+        >
+          {options.map((o, i) => (
             <li
               key={o}
+              id={`${id}-opt-${i}`}
               role="option"
               aria-selected={o === value}
-              onClick={() => {
-                onChange(o)
-                setOpen(false)
-              }}
+              className={i === active ? 'active' : undefined}
+              onMouseDown={e => e.preventDefault()} // keep focus on the list so onBlur doesn't swallow the click
+              onClick={() => choose(o)}
             >
               {o}
             </li>

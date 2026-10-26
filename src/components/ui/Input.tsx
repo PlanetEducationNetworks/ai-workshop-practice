@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, type Ref } from 'react'
 
 type InputProps = {
   label: string
@@ -7,15 +7,17 @@ type InputProps = {
   onChange: (value: string) => void
   /** Shows a red message under the field and marks it invalid. */
   error?: string
+  inputRef?: Ref<HTMLInputElement>
 }
 
-export function Input({ label, type = 'text', value, onChange, error }: InputProps) {
+export function Input({ label, type = 'text', value, onChange, error, inputRef }: InputProps) {
   const id = useId()
   const errorId = `${id}-error`
   return (
     <div className="field">
       <label htmlFor={id}>{label}</label>
       <input
+        ref={inputRef}
         id={id}
         type={type}
         value={value}
