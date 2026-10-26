@@ -247,3 +247,20 @@ test('the range text and the count are live regions', () => {
   expect(screen.getByText('1–10 of 57')).toHaveAttribute('aria-live', 'polite')
   expect(screen.getByText('57 agents')).toHaveAttribute('aria-live', 'polite')
 })
+
+// --- found by the fresh review ---
+test('clicking the rows-per-page button while the menu is open closes it', async () => {
+  render(<AgentOverviewPage />)
+  await userEvent.click(sizeButton())
+  expect(screen.getByRole('listbox')).toBeInTheDocument()
+  await userEvent.click(sizeButton())
+  expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+})
+
+test('choosing the size that is already selected does not add a history entry', async () => {
+  render(<AgentOverviewPage />)
+  const before = history.length
+  await userEvent.click(sizeButton())
+  await userEvent.keyboard('{Enter}')
+  expect(history.length).toBe(before)
+})
