@@ -3,8 +3,8 @@ import { AGENTS } from '../data/agents'
 import { Button, Input, Select } from '../components/ui'
 
 // Admin > Finance > Agent Overview. Open /#agents.
-// ponytail: sizes and default from the Figma handoff note, Radu to confirm
-const SIZES = [10, 25, 50, 100]
+// Sizes and default confirmed by the PM.
+const SIZES = [10, 25, 50]
 
 // Anything that isn't a whole page number or an allowed size falls back to the defaults (Radu to confirm).
 function readParams(search: string) {
@@ -32,7 +32,7 @@ export function AgentOverviewPage() {
     addEventListener('popstate', onPop)
     return () => removeEventListener('popstate', onPop)
   }, [])
-  // A pressed Previous/Next that just became disabled would drop focus, so move it to the current page.
+  // A pressed Previous/Next that just became disabled loses focus, so move it to the current page.
   useEffect(() => {
     if (!refocus.current) return
     refocus.current = false
@@ -118,9 +118,8 @@ export function AgentOverviewPage() {
             go({ page: 1, size: s })
           }}
         />
-        <span aria-live="polite">{`${start + 1}–${end} of ${total}`}</span>
-        <Button type="button" aria-disabled={page === 1} onClick={() => {
-            if (page === 1) return
+        <span aria-live="polite">{`Showing ${start + 1}–${end} of ${total} agents`}</span>
+        <Button type="button" disabled={page === 1} onClick={() => {
             refocus.current = page - 1 === 1
             go({ page: page - 1, size })
           }}>
@@ -131,8 +130,7 @@ export function AgentOverviewPage() {
             {n}
           </Button>
         ))}
-        <Button type="button" aria-disabled={page === pages} onClick={() => {
-            if (page === pages) return
+        <Button type="button" disabled={page === pages} onClick={() => {
             refocus.current = page + 1 === pages
             go({ page: page + 1, size })
           }}>
