@@ -21,3 +21,11 @@ body { margin: 0; }
 .fees { width: 100%; border-collapse: collapse; }
 .fees td, .fees th { padding: 10px 4px; border-bottom: 1px solid #e5e7eb; text-align: left; }
 .fees td:last-child, .fees th:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.pager { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pager .btn[aria-disabled='true'] { opacity: 0.5; cursor: default; }
+.pager .btn[aria-current='page'] { background: var(--primary); }
+.select { position: relative; display: flex; align-items: center; gap: 8px; }
+.select-btn { width: 76px; height: 36px; border-radius: 8px; border: 1px solid #d0d5dd; background: #fff; }
+.select-menu { position: absolute; bottom: calc(100% + 6px); left: 0; margin: 0; padding: 4px; list-style: none; background: #fff; border-radius: 8px; box-shadow: 0 12px 24px -4px rgba(16,24,40,.1), 0 4px 8px -2px rgba(16,24,40,.06); }
+.select-menu li { width: 136px; height: 36px; line-height: 36px; padding: 0 10px; border-radius: 8px; cursor: pointer; box-sizing: border-box; }
+.select-menu li[aria-selected='true'] { background: #f2f4f7; }
