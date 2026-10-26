@@ -144,7 +144,7 @@ test('no matches shows an empty message instead of the table', async () => {
 
 test('searching does not break on regex characters', async () => {
   render(<AgentOverviewPage />)
-  await search('(.*[')
+  await search('(.*[[') // user-event types "[[" as one literal "["
   expect(screen.getByText('No agents found for "(.*[".')).toBeInTheDocument()
 })
 
