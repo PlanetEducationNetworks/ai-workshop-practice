@@ -10,25 +10,25 @@ const rows = () => screen.getAllByRole('row').length - 1 // minus header
 test('page 1 shows 10 of 57 agencies, Previous is disabled', () => {
   render(<AgentOverviewPage />)
   expect(rows()).toBe(10)
-  expect(screen.getByText('1–10 of 57')).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Previous' })).toHaveAttribute('aria-disabled', 'true')
+  expect(screen.getByText('Showing 1–10 of 57 agents')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled()
 })
 
 test('Next and Previous move between pages', async () => {
   render(<AgentOverviewPage />)
   await userEvent.click(screen.getByRole('button', { name: 'Next' }))
-  expect(screen.getByText('11–20 of 57')).toBeInTheDocument()
+  expect(screen.getByText('Showing 11–20 of 57 agents')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: '2' })).toHaveAttribute('aria-current', 'page')
   await userEvent.click(screen.getByRole('button', { name: 'Previous' }))
-  expect(screen.getByText('1–10 of 57')).toBeInTheDocument()
+  expect(screen.getByText('Showing 1–10 of 57 agents')).toBeInTheDocument()
 })
 
 test('last page shows the remainder and disables Next', async () => {
   render(<AgentOverviewPage />)
   await userEvent.click(screen.getByRole('button', { name: '6' }))
   expect(rows()).toBe(7)
-  expect(screen.getByText('51–57 of 57')).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true')
+  expect(screen.getByText('Showing 51–57 of 57 agents')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
 })
 
 test('changing rows per page goes back to page 1', async () => {
@@ -37,7 +37,7 @@ test('changing rows per page goes back to page 1', async () => {
   await userEvent.click(screen.getByRole('button', { name: /Rows per page/ }))
   await userEvent.click(within(screen.getByRole('listbox')).getByRole('option', { name: '25' }))
   expect(rows()).toBe(25)
-  expect(screen.getByText('1–25 of 57')).toBeInTheDocument()
+  expect(screen.getByText('Showing 1–25 of 57 agents')).toBeInTheDocument()
 })
 
 const at = (search: string) => history.replaceState(null, '', `/${search}#agents`)
@@ -45,7 +45,7 @@ const at = (search: string) => history.replaceState(null, '', `/${search}#agents
 test('page and size are read from the URL', () => {
   at('?page=3&size=10')
   render(<AgentOverviewPage />)
-  expect(screen.getByText('21–30 of 57')).toBeInTheDocument()
+  expect(screen.getByText('Showing 21–30 of 57 agents')).toBeInTheDocument()
 })
 
 test('size is read from the URL', () => {
@@ -57,15 +57,15 @@ test('size is read from the URL', () => {
 test('a page past the end shows the last page', () => {
   at('?page=999&size=10')
   render(<AgentOverviewPage />)
-  expect(screen.getByText('51–57 of 57')).toBeInTheDocument()
+  expect(screen.getByText('Showing 51–57 of 57 agents')).toBeInTheDocument()
 })
 
-test.each(['?page=abc&size=7', '?page=-1', '?page=0', '?page=2.5', '?page='])(
+test.each(['?page=abc&size=7', '?page=-1', '?page=0', '?page=2.5', '?page=', '?size=100'])(
   'bad URL %s falls back to page 1 with 10 rows',
   search => {
     at(search)
     render(<AgentOverviewPage />)
-    expect(screen.getByText('1–10 of 57')).toBeInTheDocument()
+    expect(screen.getByText('Showing 1–10 of 57 agents')).toBeInTheDocument()
     expect(rows()).toBe(10)
   }
 )
@@ -95,7 +95,7 @@ test('Back restores the previous page', async () => {
   render(<AgentOverviewPage />)
   await userEvent.click(screen.getByRole('button', { name: 'Next' }))
   await back()
-  expect(screen.getByText('1–10 of 57')).toBeInTheDocument()
+  expect(screen.getByText('Showing 1–10 of 57 agents')).toBeInTheDocument()
 })
 
 test('Back after changing rows per page restores size and page', async () => {
@@ -104,7 +104,7 @@ test('Back after changing rows per page restores size and page', async () => {
   await userEvent.click(screen.getByRole('button', { name: /Rows per page/ }))
   await userEvent.click(within(screen.getByRole('listbox')).getByRole('option', { name: '25' }))
   await back()
-  expect(screen.getByText('11–20 of 57')).toBeInTheDocument()
+  expect(screen.getByText('Showing 11–20 of 57 agents')).toBeInTheDocument()
   expect(rows()).toBe(10)
 })
 
@@ -118,7 +118,7 @@ test('search filters ALL agencies, not just the current page, ignoring case', as
   render(<AgentOverviewPage />)
   await search('DHAKA')
   expect(screen.getByText(`${dhaka.length} agents`)).toBeInTheDocument()
-  expect(screen.getByText(`1–${Math.min(10, dhaka.length)} of ${dhaka.length}`)).toBeInTheDocument()
+  expect(screen.getByText(`Showing 1–${Math.min(10, dhaka.length)} of ${dhaka.length} agents`)).toBeInTheDocument()
   expect(names().every(n => n!.toLowerCase().includes('dhaka'))).toBe(true)
 })
 
@@ -149,7 +149,7 @@ test('Clear search brings every agency back', async () => {
   render(<AgentOverviewPage />)
   await search('zzzz')
   await userEvent.click(screen.getByRole('button', { name: 'Clear search' }))
-  expect(screen.getByText('1–10 of 57')).toBeInTheDocument()
+  expect(screen.getByText('Showing 1–10 of 57 agents')).toBeInTheDocument()
   expect(screen.getByLabelText('Search agencies')).toHaveValue('')
 })
 
@@ -244,7 +244,7 @@ test('Clear search moves focus back to the search box', async () => {
 
 test('the range text and the count are live regions', () => {
   render(<AgentOverviewPage />)
-  expect(screen.getByText('1–10 of 57')).toHaveAttribute('aria-live', 'polite')
+  expect(screen.getByText('Showing 1–10 of 57 agents')).toHaveAttribute('aria-live', 'polite')
   expect(screen.getByText('57 agents')).toHaveAttribute('aria-live', 'polite')
 })
 
@@ -263,4 +263,19 @@ test('choosing the size that is already selected does not add a history entry', 
   await userEvent.click(sizeButton())
   await userEvent.keyboard('{Enter}')
   expect(history.length).toBe(before)
+})
+
+test('rows per page offers 10, 25 and 50, default 10', async () => {
+  render(<AgentOverviewPage />)
+  await userEvent.click(screen.getByRole('button', { name: /Rows per page/ }))
+  const options = within(screen.getByRole('listbox')).getAllByRole('option')
+  expect(options.map(o => o.textContent)).toEqual(['10', '25', '50'])
+  expect(options[0]).toHaveAttribute('aria-selected', 'true')
+})
+
+test('Previous and Next are enabled on a middle page', async () => {
+  render(<AgentOverviewPage />)
+  await userEvent.click(screen.getByRole('button', { name: 'Next' }))
+  expect(screen.getByRole('button', { name: 'Previous' })).toBeEnabled()
+  expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled()
 })
