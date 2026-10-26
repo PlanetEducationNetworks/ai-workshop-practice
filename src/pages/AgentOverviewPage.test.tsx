@@ -179,3 +179,71 @@ test('sorting goes back to page 1 and sorts the filtered list', async () => {
   const asc = dhaka.map(a => a.students).sort((a, b) => a - b)
   expect(students()).toEqual(asc.slice(0, 10))
 })
+
+// --- Level 4: keyboard and screen reader ---
+const sizeButton = () => screen.getByRole('button', { name: /Rows per page/ })
+
+test('the pager is a labelled navigation landmark and the current page is announced', () => {
+  render(<AgentOverviewPage />)
+  expect(screen.getByRole('navigation', { name: 'Agent pagination' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '1' })).toHaveAttribute('aria-current', 'page')
+})
+
+test('rows per page opens with the keyboard, arrows move, Enter selects, focus returns to the button', async () => {
+  render(<AgentOverviewPage />)
+  sizeButton().focus()
+  await userEvent.keyboard('{Enter}')
+  const list = screen.getByRole('listbox')
+  expect(list).toHaveFocus()
+  await userEvent.keyboard('{ArrowDown}{Enter}')
+  expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+  expect(sizeButton()).toHaveFocus()
+  expect(rows()).toBe(25)
+})
+
+test('the highlighted option is exposed to screen readers', async () => {
+  render(<AgentOverviewPage />)
+  await userEvent.click(sizeButton())
+  const list = screen.getByRole('listbox')
+  expect(list).toHaveAttribute('aria-activedescendant', screen.getByRole('option', { name: '10' }).id)
+  await userEvent.keyboard('{ArrowDown}')
+  expect(list).toHaveAttribute('aria-activedescendant', screen.getByRole('option', { name: '25' }).id)
+})
+
+test('Escape closes the rows menu, keeps the size and returns focus to the button', async () => {
+  render(<AgentOverviewPage />)
+  await userEvent.click(sizeButton())
+  await userEvent.keyboard('{ArrowDown}{Escape}')
+  expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+  expect(sizeButton()).toHaveFocus()
+  expect(rows()).toBe(10)
+})
+
+test('when Next becomes disabled, focus moves to the current page button', async () => {
+  render(<AgentOverviewPage />)
+  await userEvent.click(screen.getByRole('button', { name: '5' }))
+  screen.getByRole('button', { name: 'Next' }).focus()
+  await userEvent.keyboard('{Enter}')
+  expect(screen.getByRole('button', { name: '6' })).toHaveFocus()
+})
+
+test('when Previous becomes disabled, focus moves to the current page button', async () => {
+  render(<AgentOverviewPage />)
+  await userEvent.click(screen.getByRole('button', { name: '2' }))
+  screen.getByRole('button', { name: 'Previous' }).focus()
+  await userEvent.keyboard('{Enter}')
+  expect(screen.getByRole('button', { name: '1' })).toHaveFocus()
+})
+
+test('Clear search moves focus back to the search box', async () => {
+  render(<AgentOverviewPage />)
+  await search('zzzz')
+  await userEvent.click(screen.getByRole('button', { name: 'Clear search' }))
+  expect(screen.getByLabelText('Search agencies')).toHaveFocus()
+})
+
+test('the range text and the count are live regions', () => {
+  render(<AgentOverviewPage />)
+  expect(screen.getByText('1–10 of 57')).toHaveAttribute('aria-live', 'polite')
+  expect(screen.getByText('57 agents')).toHaveAttribute('aria-live', 'polite')
+})
