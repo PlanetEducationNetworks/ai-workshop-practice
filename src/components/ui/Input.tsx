@@ -2,7 +2,7 @@ import { useId, type Ref } from 'react'
 
 type InputProps = {
   label: string
-  type?: 'text' | 'email' | 'password'
+  type?: 'text' | 'email' | 'password' | 'search'
   value: string
   onChange: (value: string) => void
   /** Shows a red message under the field and marks it invalid. */

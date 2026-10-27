@@ -62,8 +62,6 @@ export function Select({ label, value, options, onChange }: SelectProps) {
         className="select-btn"
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-labelledby={`${id}-label ${id}-btn`}
-        id={`${id}-btn`}
         onMouseDown={e => open && e.preventDefault()} // else the list's onBlur closes it first and the click reopens it
         onClick={() => (open ? close() : openMenu())}
         onKeyDown={e => {
@@ -73,34 +71,36 @@ export function Select({ label, value, options, onChange }: SelectProps) {
           }
         }}
       >
+        {/* Named by its own text, so only the list is tied to the visible label. */}
+        <span className="sr-only">{label}: </span>
         {value}
       </button>
-      {open && (
-        <ul
-          ref={list}
-          role="listbox"
-          tabIndex={-1}
-          aria-labelledby={`${id}-label`}
-          aria-activedescendant={`${id}-opt-${active}`}
-          className="select-menu"
-          onKeyDown={onListKey}
-          onBlur={() => setOpen(false)}
-        >
-          {options.map((o, i) => (
-            <li
-              key={o}
-              id={`${id}-opt-${i}`}
-              role="option"
-              aria-selected={o === value}
-              className={i === active ? 'active' : undefined}
-              onMouseDown={e => e.preventDefault()} // keep focus on the list so onBlur doesn't swallow the click
-              onClick={() => choose(o)}
-            >
-              {o}
-            </li>
-          ))}
-        </ul>
-      )}
+      {/* Always rendered (hidden while closed) so it can be found and picked from by its label. */}
+      <ul
+        ref={list}
+        hidden={!open}
+        role="listbox"
+        tabIndex={-1}
+        aria-labelledby={`${id}-label`}
+        aria-activedescendant={`${id}-opt-${active}`}
+        className="select-menu"
+        onKeyDown={onListKey}
+        onBlur={() => setOpen(false)}
+      >
+        {options.map((o, i) => (
+          <li
+            key={o}
+            id={`${id}-opt-${i}`}
+            role="option"
+            aria-selected={o === value}
+            className={i === active ? 'active' : undefined}
+            onMouseDown={e => e.preventDefault()} // keep focus on the list so onBlur doesn't swallow the click
+            onClick={() => choose(o)}
+          >
+            {o}
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }

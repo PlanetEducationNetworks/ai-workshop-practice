@@ -15,6 +15,13 @@ function readParams(search: string) {
   return { page: Math.min(page, Math.ceil(AGENTS.length / size)), size }
 }
 
+// Figma frame 10: every number up to 7 pages; above that first, last, current ±1, with "…" for gaps.
+export function pageItems(page: number, pages: number): (number | '…')[] {
+  if (pages <= 7) return Array.from({ length: pages }, (_, i) => i + 1)
+  const keep = [...new Set([1, page - 1, page, page + 1, pages])].filter(n => n >= 1 && n <= pages)
+  return keep.flatMap((n, i) => (i && n - keep[i - 1] > 1 ? ['…' as const, n] : [n]))
+}
+
 export function AgentOverviewPage() {
   const [{ page: rawPage, size }, setParams] = useState(() => readParams(location.search))
   const searchBox = useRef<HTMLInputElement>(null)
@@ -47,38 +54,48 @@ export function AgentOverviewPage() {
   const page = Math.min(rawPage, pages)
   const start = (page - 1) * size
   const end = Math.min(start + size, total)
+  const clearSearch = () => {
+    setQuery('')
+    go({ page: 1, size }, true)
+    searchBox.current?.focus()
+  }
   return (
     <main className="agents">
       <h1>Agent Overview</h1>
-      <p className="agents-sub">Applications, commission and outstanding balances for every agent.</p>
+      <p className="agents-sub">Every agency and the number of students it has.</p>
       <div className="agents-card">
       <div className="toolbar">
-        <Input
-          inputRef={searchBox}
-          label="Search agencies"
-          placeholder="Search by agency name"
-          value={query}
-          onChange={v => {
-            setQuery(v)
-            go({ page: 1, size }, true)
-          }}
-        />
+        <div className="search">
+          <Input
+            inputRef={searchBox}
+            label="Search agencies"
+            type="search"
+            placeholder="Search by agency name"
+            value={query}
+            onChange={v => {
+              setQuery(v)
+              go({ page: 1, size }, true)
+            }}
+          />
+          {query && <Button type="button" className="search-clear" aria-label="Clear search text" onClick={clearSearch} />}
+        </div>
         <span className="count" aria-live="polite">{total} agents</span>
       </div>
       <table className="agents-table">
         <thead>
           <tr>
             <th>Agency</th>
-            <th className="num" aria-sort={sort === 'asc' ? 'ascending' : sort === 'desc' ? 'descending' : undefined}>
-              <Button
-                type="button"
-                className="sort-btn"
-                onClick={() => {
-                  setSort(sort === null ? 'asc' : sort === 'asc' ? 'desc' : null)
-                  go({ page: 1, size }, true)
-                }}
-              >
-                Students{sort === 'asc' ? ' ▲' : sort === 'desc' ? ' ▼' : ''}
+            {/* The click is on the cell so the whole header sorts; the button's own clicks bubble up to it. */}
+            <th
+              className="num"
+              aria-sort={sort === 'asc' ? 'ascending' : sort === 'desc' ? 'descending' : undefined}
+              onClick={() => {
+                setSort(sort === null ? 'desc' : sort === 'desc' ? 'asc' : null)
+                go({ page: 1, size }, true)
+              }}
+            >
+              <Button type="button" className="sort-btn">
+                Students
               </Button>
             </th>
           </tr>
@@ -89,23 +106,19 @@ export function AgentOverviewPage() {
               <td colSpan={2} className="empty">
                 <span className="empty-icon" />
                 <strong>No agents match “{query.trim()}”</strong>
-                <p>Check the spelling and try again.</p>
-                <Button
-                  type="button"
-                  className="secondary"
-                  onClick={() => {
-                    setQuery('')
-                    go({ page: 1, size }, true)
-                    searchBox.current?.focus()
-                  }}
-                >
+                <p>Check the spelling, or try part of the agency name.</p>
+                <Button type="button" className="secondary" onClick={clearSearch}>
                   Clear search
                 </Button>
               </td>
             </tr>
           ) : (
             list.slice(start, end).map(a => (
-              <tr key={a.id}><td>{a.name}</td><td className="num">{a.students}</td></tr>
+              <tr key={a.id}>
+                {/* Initials come from CSS so the cell text stays just the name. */}
+                <td className="agency" data-initials={a.name.split(' ').slice(0, 2).map(w => w[0]).join('')}>{a.name}</td>
+                <td className="num">{a.students}</td>
+              </tr>
             ))
           )}
         </tbody>
@@ -130,8 +143,10 @@ export function AgentOverviewPage() {
             }}>
             Previous
           </Button>
-          {Array.from({ length: pages }, (_, i) => i + 1).map(n => (
-            <Button key={n} type="button" className="page" aria-current={n === page ? 'page' : undefined} onClick={() => go({ page: n, size })}>
+          {pageItems(page, pages).map((n, i) => n === '…' ? (
+            <span key={`gap${i}`} className="gap" aria-hidden="true">…</span>
+          ) : (
+            <Button key={n} type="button" className="page" data-of={pages} aria-current={n === page ? 'page' : undefined} onClick={() => go({ page: n, size })}>
               {n}
             </Button>
           ))}
