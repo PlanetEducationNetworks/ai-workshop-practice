@@ -52,7 +52,9 @@ export function AgentOverviewPage() {
     pagerClicked.current = false
     const active = document.activeElement
     if (!active || active === document.body || (active instanceof HTMLButtonElement && active.disabled)) {
-      pager.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus()
+      // Previous went away (page 1): continue with Next. Next went away (last page): go back to Previous.
+      const buttons = pager.current?.querySelectorAll('button')
+      buttons?.[page === 1 ? buttons.length - 1 : 0].focus()
     }
   }, [page])
 
@@ -75,41 +77,79 @@ export function AgentOverviewPage() {
   }
 
   return (
-    <div className="login">
+    <div className="agents-page">
+      <p className="crumbs">Admin / Finance</p>
       <h1>Agent Overview</h1>
-      {/* The first keystroke of a search adds a history entry (so Back leaves the search); more typing replaces it. */}
-      <Input label="Search" value={q} onChange={value => go({ q: value, page: 1 }, q !== '')} />
-      <Select label="Rows per page" value={size} options={SIZES} onChange={value => go({ size: value, page: 1 })} />
-      {rows.length > 0 && (
-        <table className="fees">
-          <thead>
-            <tr>
-              <th>Agency</th>
-              <th aria-sort={sort === 'asc' ? 'ascending' : sort === 'desc' ? 'descending' : 'none'}>
-                <Button type="button" onClick={() => go({ sort: sort === 'asc' ? 'desc' : 'asc', page: 1 })}>
-                  Students <span aria-hidden="true">{sort === 'asc' ? '▲' : sort === 'desc' ? '▼' : ''}</span>
-                </Button>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(a => (
-              <tr key={a.id}><td>{a.name}</td><td>{a.students}</td></tr>
+      <p className="subtitle">Every agency and the number of students linked to it.</p>
+      <div className="card">
+        <div className="toolbar">
+          {/* The first keystroke of a search adds a history entry (so Back leaves the search); more typing replaces it. */}
+          <Input
+            label="Search"
+            placeholder="Search agencies"
+            value={q}
+            onChange={value => go({ q: value, page: 1 }, q !== '')}
+          />
+        </div>
+        {rows.length > 0 ? (
+          <div className="table-wrap">
+            <table className="agents">
+              <thead>
+                <tr>
+                  <th>Agency</th>
+                  <th aria-sort={sort === 'asc' ? 'ascending' : sort === 'desc' ? 'descending' : 'none'}>
+                    <Button type="button" onClick={() => go({ sort: sort === 'asc' ? 'desc' : 'asc', page: 1 })}>
+                      Students <span aria-hidden="true">{sort === 'asc' ? '▲' : sort === 'desc' ? '▼' : ''}</span>
+                    </Button>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map(a => (
+                  <tr key={a.id}><td>{a.name}</td><td>{a.students}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="empty">
+            <p>Check the spelling, or try part of the agency name.</p>
+            <Button type="button" onClick={() => go({ q: '', page: 1 })}>Clear search</Button>
+          </div>
+        )}
+        <div className="pager-bar">
+          <div className="rows">
+            <Select label="Rows per page" value={size} options={SIZES} onChange={value => go({ size: value, page: 1 })} />
+            {/* One live region that is always on the page, so screen readers announce both the count and the empty message. */}
+            <p aria-live="polite">
+              {rows.length === 0
+                ? `No agents found for "${q.trim()}".`
+                : `Showing ${start + 1}–${start + rows.length} of ${matches.length} agents`}
+            </p>
+          </div>
+          <nav className="pager" aria-label="Pagination" ref={pager}>
+            <Button type="button" disabled={page === 1} onClick={() => step(-1)}>
+              <span aria-hidden="true">‹</span> Previous
+            </Button>
+            {Array.from({ length: pages }, (_, i) => i + 1).map(n => (
+              <Button
+                key={n}
+                type="button"
+                className="btn page-number"
+                aria-label={`Page ${n}`}
+                aria-current={n === page ? 'page' : undefined}
+                onClick={() => n !== page && step(n - page)}
+              >
+                {n}
+              </Button>
             ))}
-          </tbody>
-        </table>
-      )}
-      {/* One live region that is always on the page, so screen readers announce both the count and the empty message. */}
-      <p aria-live="polite">
-        {rows.length === 0
-          ? `No agents found for "${q.trim()}".`
-          : `Showing ${start + 1}–${start + rows.length} of ${matches.length} agents`}
-      </p>
-      <nav className="pager" aria-label="Pagination" ref={pager}>
-        <Button type="button" disabled={page === 1} onClick={() => step(-1)}>Previous</Button>
-        <span aria-current="page">Page {page} of {pages}</span>
-        <Button type="button" disabled={page === pages} onClick={() => step(1)}>Next</Button>
-      </nav>
+            <span className="phone-status">Page {page} of {pages}</span>
+            <Button type="button" disabled={page === pages} onClick={() => step(1)}>
+              Next <span aria-hidden="true">›</span>
+            </Button>
+          </nav>
+        </div>
+      </div>
     </div>
   )
 }

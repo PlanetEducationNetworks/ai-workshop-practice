@@ -241,14 +241,45 @@ test('a page past the end of the search results shows the last page of the resul
 })
 
 // Level 4: accessibility
-test('the pager is a navigation landmark that says which page is current', async () => {
+test('the pager is a navigation landmark with numbered pages, and the current page is marked', async () => {
   render(<AgentOverviewPage />)
   const nav = screen.getByRole('navigation', { name: 'Pagination' })
   expect(within(nav).getByRole('button', { name: 'Previous' })).toBeInTheDocument()
   expect(within(nav).getByRole('button', { name: 'Next' })).toBeInTheDocument()
-  expect(within(nav).getByText('Page 1 of 6')).toHaveAttribute('aria-current', 'page')
+  expect(within(nav).getAllByRole('button', { name: /^Page \d$/ })).toHaveLength(6)
+  expect(within(nav).getByRole('button', { name: 'Page 1' })).toHaveAttribute('aria-current', 'page')
   await next()
-  expect(within(nav).getByText('Page 2 of 6')).toHaveAttribute('aria-current', 'page')
+  expect(within(nav).getByRole('button', { name: 'Page 2' })).toHaveAttribute('aria-current', 'page')
+  expect(within(nav).getByRole('button', { name: 'Page 1' })).not.toHaveAttribute('aria-current')
+  expect(nav.querySelectorAll('[aria-current="page"]')).toHaveLength(1)
+})
+
+test('a page number goes straight to that page and shows it in the URL', async () => {
+  open()
+  await userEvent.click(screen.getByRole('button', { name: 'Page 4' }))
+  expect(screen.getByText('Showing 31–40 of 57 agents')).toBeInTheDocument()
+  expect(location.search).toBe('?page=4&size=10')
+})
+
+test('the page has a breadcrumb, a subtitle and a single navigation landmark', () => {
+  render(<AgentOverviewPage />)
+  expect(screen.getByText('Admin / Finance')).toBeInTheDocument()
+  expect(screen.getByText('Every agency and the number of students linked to it.')).toBeInTheDocument()
+  expect(screen.getAllByRole('navigation')).toHaveLength(1)
+})
+
+test('the search box shows a placeholder and keeps its Search label', () => {
+  render(<AgentOverviewPage />)
+  expect(screen.getByPlaceholderText('Search agencies')).toBe(screen.getByLabelText('Search'))
+})
+
+test('the empty state gives a hint and a Clear search button that brings everything back', async () => {
+  render(<AgentOverviewPage />)
+  await search('zzz')
+  expect(screen.getByText('Check the spelling, or try part of the agency name.')).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Clear search' }))
+  expect(screen.getByLabelText('Search')).toHaveValue('')
+  expect(screen.getByText('Showing 1–10 of 57 agents')).toBeInTheDocument()
 })
 
 test('the Showing text is announced politely when it changes', () => {
@@ -261,9 +292,11 @@ test('it works with the keyboard only', async () => {
   await userEvent.tab()
   expect(screen.getByLabelText('Search')).toHaveFocus()
   await userEvent.keyboard('dhaka{Tab}')
-  expect(screen.getByLabelText('Rows per page')).toHaveFocus()
-  await userEvent.keyboard('{Tab}{Enter}')
+  expect(sortButton()).toHaveFocus()
+  await userEvent.keyboard('{Enter}')
   expect(studentsHeader()).toHaveAttribute('aria-sort', 'ascending')
+  await userEvent.keyboard('{Tab}')
+  expect(screen.getByLabelText('Rows per page')).toHaveFocus()
 })
 
 test('focus moves to Previous when Next becomes disabled on the last page', async () => {
