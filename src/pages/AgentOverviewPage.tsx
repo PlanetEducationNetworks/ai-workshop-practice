@@ -28,6 +28,7 @@ function readUrl(): View {
 export function AgentOverviewPage() {
   const [view, setView] = useState(readUrl)
   const { size, q, sort } = view
+  const toolbar = useRef<HTMLDivElement>(null)
   const pager = useRef<HTMLElement>(null)
   const pagerClicked = useRef(false)
 
@@ -82,7 +83,7 @@ export function AgentOverviewPage() {
       <h1>Agent Overview</h1>
       <p className="subtitle">Every agency and the number of students linked to it.</p>
       <div className="card">
-        <div className="toolbar">
+        <div className="toolbar" ref={toolbar}>
           {/* The first keystroke of a search adds a history entry (so Back leaves the search); more typing replaces it. */}
           <Input
             label="Search"
@@ -114,14 +115,22 @@ export function AgentOverviewPage() {
         ) : (
           <div className="empty">
             <p>Check the spelling, or try part of the agency name.</p>
-            <Button type="button" onClick={() => go({ q: '', page: 1 })}>Clear search</Button>
+            <Button
+              type="button"
+              onClick={() => {
+                go({ q: '', page: 1 })
+                toolbar.current?.querySelector('input')?.focus() // this button is about to disappear
+              }}
+            >
+              Clear search
+            </Button>
           </div>
         )}
         <div className="pager-bar">
           <div className="rows">
             <Select label="Rows per page" value={size} options={SIZES} onChange={value => go({ size: value, page: 1 })} />
             {/* One live region that is always on the page, so screen readers announce both the count and the empty message. */}
-            <p aria-live="polite">
+            <p role="status" aria-live="polite">
               {rows.length === 0
                 ? `No agents found for "${q.trim()}".`
                 : `Showing ${start + 1}–${start + rows.length} of ${matches.length} agents`}

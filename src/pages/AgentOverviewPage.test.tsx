@@ -331,3 +331,19 @@ test('the empty message and the Showing text share one live region', async () =>
   await userEvent.clear(screen.getByLabelText('Search'))
   expect(screen.getByText('Showing 1–10 of 57 agents')).toBe(live)
 })
+
+test('the live region has the status role, for the count and for the empty message', async () => {
+  render(<AgentOverviewPage />)
+  expect(screen.getByRole('status')).toHaveTextContent('Showing 1–10 of 57 agents')
+  await search('zzz')
+  expect(screen.getByRole('status')).toHaveTextContent('No agents found for "zzz".')
+})
+
+test('after Clear search, keyboard focus moves to the Search box instead of being lost', async () => {
+  render(<AgentOverviewPage />)
+  await search('zzz')
+  screen.getByRole('button', { name: 'Clear search' }).focus()
+  await userEvent.keyboard('{Enter}')
+  expect(screen.getByLabelText('Search')).toHaveValue('')
+  expect(screen.getByLabelText('Search')).toHaveFocus()
+})
