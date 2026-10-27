@@ -1,6 +1,6 @@
 import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { AgentOverviewPage } from './AgentOverviewPage'
+import { AgentOverviewPage, pageItems } from './AgentOverviewPage'
 import { AGENTS } from '../data/agents'
 
 beforeEach(() => history.replaceState(null, '', '/'))
@@ -34,8 +34,7 @@ test('last page shows the remainder and disables Next', async () => {
 test('changing rows per page goes back to page 1', async () => {
   render(<AgentOverviewPage />)
   await userEvent.click(screen.getByRole('button', { name: 'Next' }))
-  await userEvent.click(screen.getByRole('button', { name: /Rows per page/ }))
-  await userEvent.click(within(screen.getByRole('listbox')).getByRole('option', { name: '25' }))
+  await userEvent.selectOptions(screen.getByLabelText('Rows per page'), '25')
   expect(rows()).toBe(25)
   expect(screen.getByText('Showing 1–25 of 57 agents')).toBeInTheDocument()
 })
@@ -80,8 +79,7 @@ test('Next writes page and size to the URL and keeps the hash', async () => {
 
 test('changing rows per page writes size and page 1 to the URL', async () => {
   render(<AgentOverviewPage />)
-  await userEvent.click(screen.getByRole('button', { name: /Rows per page/ }))
-  await userEvent.click(within(screen.getByRole('listbox')).getByRole('option', { name: '25' }))
+  await userEvent.selectOptions(screen.getByLabelText('Rows per page'), '25')
   expect(location.search).toBe('?page=1&size=25')
 })
 
@@ -101,8 +99,7 @@ test('Back restores the previous page', async () => {
 test('Back after changing rows per page restores size and page', async () => {
   render(<AgentOverviewPage />)
   await userEvent.click(screen.getByRole('button', { name: 'Next' }))
-  await userEvent.click(screen.getByRole('button', { name: /Rows per page/ }))
-  await userEvent.click(within(screen.getByRole('listbox')).getByRole('option', { name: '25' }))
+  await userEvent.selectOptions(screen.getByLabelText('Rows per page'), '25')
   await back()
   expect(screen.getByText('Showing 11–20 of 57 agents')).toBeInTheDocument()
   expect(rows()).toBe(10)
@@ -153,18 +150,18 @@ test('Clear search brings every agency back', async () => {
   expect(screen.getByLabelText('Search agencies')).toHaveValue('')
 })
 
-test('sorting by students: ascending, descending, then back to the original order', async () => {
+test('sorting by students: most first, then fewest first, then back to the original order', async () => {
   render(<AgentOverviewPage />)
   const original = names()
   const header = screen.getByRole('columnheader', { name: /Students/ })
   const sort = screen.getByRole('button', { name: /Students/ })
   const all = AGENTS.map(a => a.students)
   await userEvent.click(sort)
-  expect(header).toHaveAttribute('aria-sort', 'ascending')
-  expect(students()).toEqual([...all].sort((a, b) => a - b).slice(0, 10))
-  await userEvent.click(sort)
   expect(header).toHaveAttribute('aria-sort', 'descending')
   expect(students()).toEqual([...all].sort((a, b) => b - a).slice(0, 10))
+  await userEvent.click(sort)
+  expect(header).toHaveAttribute('aria-sort', 'ascending')
+  expect(students()).toEqual([...all].sort((a, b) => a - b).slice(0, 10))
   await userEvent.click(sort)
   expect(header).not.toHaveAttribute('aria-sort')
   expect(names()).toEqual(original)
@@ -176,8 +173,8 @@ test('sorting goes back to page 1 and sorts the filtered list', async () => {
   await userEvent.click(screen.getByRole('button', { name: /Students/ }))
   expect(screen.getByRole('button', { name: '1' })).toHaveAttribute('aria-current', 'page')
   await search('dhaka')
-  const asc = dhaka.map(a => a.students).sort((a, b) => a - b)
-  expect(students()).toEqual(asc.slice(0, 10))
+  const desc = dhaka.map(a => a.students).sort((a, b) => b - a)
+  expect(students()).toEqual(desc.slice(0, 10))
 })
 
 // --- Level 4: keyboard and screen reader ---
@@ -260,14 +257,13 @@ test('clicking the rows-per-page button while the menu is open closes it', async
 test('choosing the size that is already selected does not add a history entry', async () => {
   render(<AgentOverviewPage />)
   const before = history.length
-  await userEvent.click(sizeButton())
-  await userEvent.keyboard('{Enter}')
+  await userEvent.selectOptions(screen.getByLabelText('Rows per page'), '10')
   expect(history.length).toBe(before)
 })
 
 test('rows per page offers 10, 25 and 50, default 10', async () => {
   render(<AgentOverviewPage />)
-  await userEvent.click(screen.getByRole('button', { name: /Rows per page/ }))
+  await userEvent.click(sizeButton())
   const options = within(screen.getByRole('listbox')).getAllByRole('option')
   expect(options.map(o => o.textContent)).toEqual(['10', '25', '50'])
   expect(options[0]).toHaveAttribute('aria-selected', 'true')
@@ -278,4 +274,30 @@ test('Previous and Next are enabled on a middle page', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Next' }))
   expect(screen.getByRole('button', { name: 'Previous' })).toBeEnabled()
   expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled()
+})
+
+test('the × in the search box clears a search that has results and refocuses the box', async () => {
+  render(<AgentOverviewPage />)
+  expect(screen.queryByRole('button', { name: 'Clear search text' })).not.toBeInTheDocument()
+  await search('dhaka')
+  await userEvent.click(screen.getByRole('button', { name: 'Clear search text' }))
+  expect(screen.getByLabelText('Search agencies')).toHaveValue('')
+  expect(screen.getByLabelText('Search agencies')).toHaveFocus()
+  expect(screen.getByText('Showing 1–10 of 57 agents')).toBeInTheDocument()
+})
+
+test('page numbers: every number up to 7 pages, then first, last, current ±1 and …', () => {
+  expect(pageItems(1, 6)).toEqual([1, 2, 3, 4, 5, 6])
+  expect(pageItems(4, 7)).toEqual([1, 2, 3, 4, 5, 6, 7])
+  expect(pageItems(7, 24)).toEqual([1, '…', 6, 7, 8, '…', 24])
+  expect(pageItems(1, 24)).toEqual([1, 2, '…', 24])
+  expect(pageItems(24, 24)).toEqual([1, '…', 23, 24])
+  expect(pageItems(2, 8)).toEqual([1, 2, 3, '…', 8])
+})
+
+test('the search field is a searchbox and the whole Students header cell sorts', async () => {
+  render(<AgentOverviewPage />)
+  expect(screen.getByRole('searchbox', { name: 'Search agencies' })).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('columnheader', { name: /Students/ }))
+  expect(screen.getByRole('columnheader', { name: /Students/ })).toHaveAttribute('aria-sort', 'descending')
 })
