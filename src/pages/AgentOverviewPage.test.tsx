@@ -71,6 +71,59 @@ test('changing rows per page changes the rows and goes back to page 1', async ()
   expect(screen.getByText('Showing 1–50 of 57 agents')).toBeInTheDocument()
 })
 
+// Rows per page: the design's button with a list that opens above it, on top of a real select
+const rowsButton = () => document.querySelector<HTMLButtonElement>('.select-button')!
+const rowsList = () => document.querySelector<HTMLElement>('.select-list')
+const rowsItem = (label: string) =>
+  [...document.querySelectorAll<HTMLButtonElement>('.select-item')].find(i => i.textContent === label)!
+
+test('Rows per page is a custom dropdown button that opens a list above it, with 10, 25 and 50', async () => {
+  render(<AgentOverviewPage />)
+  expect(rowsButton()).toHaveTextContent('10')
+  expect(rowsList()).toBeNull()
+  await userEvent.click(rowsButton())
+  expect(rowsList()).not.toBeNull()
+  expect([...document.querySelectorAll('.select-item')].map(i => i.textContent)).toEqual(['10', '25', '50'])
+  expect(rowsItem('10')).toHaveClass('is-selected')
+  expect(rowsItem('10').querySelector('.icon-check')).not.toBeNull()
+  expect(rowsItem('25').querySelector('.icon-check')).toBeNull()
+})
+
+test('choosing a size in the custom list changes the rows, goes back to page 1 and closes the list', async () => {
+  render(<AgentOverviewPage />)
+  await next()
+  await userEvent.click(rowsButton())
+  await userEvent.click(rowsItem('25'))
+  expect(screen.getByText('Showing 1–25 of 57 agents')).toBeInTheDocument()
+  expect(dataRows()).toBe(25)
+  expect(rowsList()).toBeNull()
+  expect(rowsButton()).toHaveTextContent('25')
+  expect(screen.getByLabelText('Rows per page')).toHaveValue('25')
+})
+
+test('the custom list closes on Escape and when you click elsewhere', async () => {
+  render(<AgentOverviewPage />)
+  await userEvent.click(rowsButton())
+  expect(rowsList()).not.toBeNull()
+  await userEvent.keyboard('{Escape}')
+  expect(rowsList()).toBeNull()
+  await userEvent.click(rowsButton())
+  expect(rowsList()).not.toBeNull()
+  await userEvent.click(screen.getByRole('heading', { level: 1 }))
+  expect(rowsList()).toBeNull()
+})
+
+test('the real select stays in the page for keyboards and screen readers, and the button follows it', async () => {
+  open('?size=50')
+  const select = screen.getByLabelText('Rows per page')
+  expect(select.tagName).toBe('SELECT')
+  expect(rowsButton()).toHaveTextContent('50')
+  expect(rowsButton()).toHaveAttribute('aria-hidden', 'true')
+  expect(rowsButton()).toHaveAttribute('tabindex', '-1')
+  await userEvent.selectOptions(select, '10')
+  expect(rowsButton()).toHaveTextContent('10')
+})
+
 test('reads page and size from the URL', () => {
   open('?page=3&size=25')
   expect(screen.getByText('Showing 51–57 of 57 agents')).toBeInTheDocument()

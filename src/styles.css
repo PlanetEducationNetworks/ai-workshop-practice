@@ -116,11 +116,19 @@ body { margin: 0; }
 .agents-page .rows { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; }
 .agents-page .rows .field { display: flex; align-items: center; gap: 8px; }
 .agents-page .rows label { font-size: 14px; font-weight: 400; line-height: 21px; color: var(--ink-2); }
-.agents-page .rows select {
-  appearance: none; -webkit-appearance: none; height: 40px; padding: 0 32px 0 12px; border: 1px solid var(--border-control); border-radius: 8px;
-  background: #fff url('./assets/chevron-down.svg') no-repeat right 11px center / 10px 6px; color: #16161a; font-size: 14px; font-weight: 600; cursor: pointer;
+/* Rows per page: the design's button and the list that opens above it. The real select sits under it, visually hidden. */
+.agents-page .select { position: relative; }
+.agents-page .select-native { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.agents-page .select-button { display: inline-flex; align-items: center; gap: 8px; height: 40px; min-width: 40px; padding: 0 8px 0 12px; border: 1px solid var(--border-control); border-radius: 8px; background: #fff; color: #16161a; font-size: 14px; font-weight: 600; line-height: 21px; cursor: pointer; }
+.agents-page .select-button:hover { background: var(--surface-sunken); }
+.agents-page .select-native:focus-visible + .select-button { outline: 2px solid var(--focus); outline-offset: 2px; }
+.agents-page .select-list {
+  position: absolute; left: 0; bottom: calc(100% + 4px); z-index: 20; display: flex; flex-direction: column; min-width: 120px; margin: 0; padding: 4px; list-style: none;
+  border: 1px solid var(--border); border-radius: 8px; background: #fff; box-shadow: 0 1px 1px rgba(22, 22, 26, 0.06), 0 8px 12px rgba(22, 22, 26, 0.12);
 }
-.agents-page .rows select:hover { background-color: var(--surface-sunken); }
+.agents-page .select-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; height: 36px; padding: 0 12px; border: 0; border-radius: 6px; background: none; color: #16161a; font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.agents-page .select-item:hover, .agents-page .select-item.is-selected { background: var(--surface-sunken); }
+.agents-page .select-item.is-selected { font-weight: 600; }
 .agents-page .rows p { margin: 0; font-size: 14px; line-height: 21px; color: var(--ink-2); }
 .agents-page .pager { display: flex; align-items: center; gap: 4px; }
 .agents-page .pager > .btn:first-child { margin-right: 4px; }
