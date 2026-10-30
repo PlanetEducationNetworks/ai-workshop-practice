@@ -44,7 +44,7 @@ body { margin: 0; }
 .secondary { padding: 8px 14px; border: 1px solid var(--border-strong); border-radius: 8px; background: #fff; color: var(--text-primary); font: 500 14px/20px Inter, system-ui, sans-serif; cursor: pointer; }
 .agents-table { width: 100%; border-collapse: collapse; }
 .agents-table th { height: 44px; padding: 0 16px; background: var(--bg-subtle); border-bottom: 1px solid var(--border-default); color: var(--text-secondary); font: 500 12px/18px Inter, system-ui, sans-serif; text-align: left; }
-.agents-table td { height: 56px; padding: 0 16px; border-bottom: 1px solid var(--border-default); }
+.agents-table td { height: 55px; padding: 0 16px; border-bottom: 1px solid var(--border-default); }
 .agents-table .num { width: 168px; text-align: right; font-variant-numeric: tabular-nums; }
 .agents-table th.num { padding-right: 10px; cursor: pointer; }
 .agency { font-weight: 500; }
