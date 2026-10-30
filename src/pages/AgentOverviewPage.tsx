@@ -7,11 +7,13 @@ import { Button, Input, Select } from '../components/ui'
 const SIZES = [10, 25, 50]
 
 // Anything that isn't a whole page number or an allowed size falls back to the defaults (Radu to confirm).
+// Digits only: "0x19" and "1e1" are not numbers here.
+const digits = (s: string | null) => (s !== null && /^\d+$/.test(s) ? Number(s) : NaN)
 function readParams(search: string) {
   const q = new URLSearchParams(search)
-  const size = SIZES.includes(Number(q.get('size'))) ? Number(q.get('size')) : SIZES[0]
-  const raw = Number(q.get('page'))
-  const page = Number.isInteger(raw) && raw >= 1 ? raw : 1
+  const size = SIZES.includes(digits(q.get('size'))) ? digits(q.get('size')) : SIZES[0]
+  const raw = digits(q.get('page'))
+  const page = raw >= 1 ? raw : 1
   return { page: Math.min(page, Math.ceil(AGENTS.length / size)), size }
 }
 

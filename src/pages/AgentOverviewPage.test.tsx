@@ -59,7 +59,7 @@ test('a page past the end shows the last page', () => {
   expect(screen.getByText('Showing 51–57 of 57 agents')).toBeInTheDocument()
 })
 
-test.each(['?page=abc&size=7', '?page=-1', '?page=0', '?page=2.5', '?page=', '?size=100'])(
+test.each(['?page=abc&size=7', '?page=-1', '?page=0', '?page=2.5', '?page=', '?size=100', '?page=0x19', '?page=1e1', '?size=0x19'])(
   'bad URL %s falls back to page 1 with 10 rows',
   search => {
     at(search)
